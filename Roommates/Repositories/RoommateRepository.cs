@@ -1,5 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using Roommates.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 
 namespace Roommates.Repositories
@@ -7,6 +9,44 @@ namespace Roommates.Repositories
     public class RoommateRepository : BaseRepository
     {
         public RoommateRepository(string connectionString) : base(connectionString) { }
+
+        public List<Roommate> GetAll()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT Id, FirstName, LastName FROM Roommate";
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        List<Roommate> roommates = new List<Roommate>();
+
+                        while (reader.Read())
+                        {
+                            int idColumnPosition = reader.GetOrdinal("Id");
+                            int idValue = reader.GetInt32(idColumnPosition);
+                            int firstNameColumnPosition = reader.GetOrdinal("FirstName");
+                            string firstNameValue = reader.GetString(firstNameColumnPosition);
+                            int lastNameColumnPosition = reader.GetOrdinal("LastName");
+                            string lastNameValue = reader.GetString(lastNameColumnPosition);
+
+                            Roommate roommate = new Roommate
+                            {
+                                Id = idValue,
+                                FirstName = firstNameValue,
+                                LastName = lastNameValue
+                            };
+
+                            roommates.Add(roommate);
+                        }
+                        return roommates;
+                    }
+                }
+            }
+        }
 
         public Roommate GetById(int id)
         {
@@ -40,4 +80,5 @@ namespace Roommates.Repositories
             }
         }
     }
+
 }

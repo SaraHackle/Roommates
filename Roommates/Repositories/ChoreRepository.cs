@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using Roommates.Models;
 
@@ -87,5 +88,60 @@ namespace Roommates.Repositories
                 }
             }
         }
+        public List<Chore> GetUnassignedChore()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT Name, Chore.Id FROM Chore LEFT JOIN RoommateChore ON RoommateChore.ChoreId = Chore.Id  WHERE RoommateChore.Id is NULL";
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    { 
+
+                        List<Chore> unassignedChores = new List<Chore>();
+
+                        while (reader.Read())
+                        {
+                            int idColumnPosition = reader.GetOrdinal("Id");
+                            int idValue = reader.GetInt32(idColumnPosition);
+                            int nameColumnPosition = reader.GetOrdinal("Name");
+                            string nameValue = reader.GetString(nameColumnPosition);
+
+                            Chore unassignedChore = new Chore
+                            {
+                                Id = idValue,
+                                Name = nameValue
+                            };
+
+                            unassignedChores.Add(unassignedChore);
+                        }
+                        return unassignedChores;
+                    }
+                }
+            }
+        }
+         public void AssignChore( int choreId, int roommateId)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"INSERT INTO RoommateChore (ChoreId, RoommateId) 
+                                         VALUES (@ChoreId, @RoommateId)";
+                    cmd.Parameters.AddWithValue("@ChoreId", choreId);
+                    cmd.Parameters.AddWithValue("@RoommateId", roommateId);
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            // when this method is finished we can look in the database and see the new room.
+        }
+
+        
     }
 }

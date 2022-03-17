@@ -2,6 +2,7 @@
 using Roommates.Repositories;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Roommates
 {
@@ -16,6 +17,7 @@ namespace Roommates
             RoomRepository roomRepo = new RoomRepository(CONNECTION_STRING);
             ChoreRepository choreRepo = new ChoreRepository(CONNECTION_STRING);
             RoommateRepository roommateRepo = new RoommateRepository(CONNECTION_STRING);
+            ChoreRepository unassignedChoreRepo = new ChoreRepository(CONNECTION_STRING);
             bool runProgram = true;
             while (runProgram)
             {
@@ -64,6 +66,45 @@ namespace Roommates
                         Console.ReadKey();
                         break;
 
+                    case ("Update a room"):
+                        List<Room> roomOptions = roomRepo.GetAll();
+                        foreach (Room r in roomOptions)
+                        {
+                            Console.WriteLine($"{r.Id} - {r.Name} Max Occupancy({r.MaxOccupancy})");
+                        }
+
+                        Console.Write("Which room would you like to update? ");
+                        int selectedRoomId = int.Parse(Console.ReadLine());
+                        Room selectedRoom = roomOptions.FirstOrDefault(r => r.Id == selectedRoomId);
+
+                        Console.Write("New Name: ");
+                        selectedRoom.Name = Console.ReadLine();
+
+                        Console.Write("New Max Occupancy: ");
+                        selectedRoom.MaxOccupancy = int.Parse(Console.ReadLine());
+
+                        roomRepo.Update(selectedRoom);
+
+                        Console.WriteLine("Room has been successfully updated");
+                        Console.Write("Press any key to continue");
+                        Console.ReadKey();
+                        break;
+
+                    case ("Delete a room"):
+                        List<Room> allRoomsToBeDeleted = roomRepo.GetAll();
+                        foreach (Room r in allRoomsToBeDeleted)
+                        {
+                            Console.WriteLine($"{r.Id}. {r.Name} with a max occupancy of {r.MaxOccupancy}");
+                        }
+                        Console.Write("Which room would you like to Delete? ");
+                        int selectedRoomIdToDelete = int.Parse(Console.ReadLine());
+                        Room selectedRoomToDelete = allRoomsToBeDeleted.FirstOrDefault(r => r.Id == selectedRoomIdToDelete);
+                        roomRepo.Delete(selectedRoomIdToDelete);
+                        Console.WriteLine("Room has been successfully deleted");
+                        Console.Write("Press any key to continue");
+                        Console.ReadKey();
+                        break;
+
                     case ("Show all chores"):
                         List<Chore> chores = choreRepo.GetAll();
                         foreach (Chore c in chores)
@@ -93,6 +134,16 @@ namespace Roommates
                         Console.ReadKey();
                         break;
 
+                    case ("See unassigned chores"):
+                        List<Chore> unassignedChores = unassignedChoreRepo.GetUnassignedChore();
+                        foreach (Chore c in unassignedChores)
+                        {
+                            Console.WriteLine($"{c.Name} is not assigned to a roommate");
+                        }
+                        Console.Write("Press any key to continue");
+                        Console.ReadKey();
+                        break;
+
                     case ("Search for roommate"):
                         Console.Write("Roommate Id: ");
                         int roommateId = int.Parse(Console.ReadLine());
@@ -100,6 +151,34 @@ namespace Roommates
                         Roommate roommate = roommateRepo.GetById(roommateId);
 
                         Console.WriteLine($"{roommate.FirstName} - Pays {roommate.RentPortion}% of the rent, and lives in the {roommate.Room.Name}");
+                        Console.Write("Press any key to continue");
+                        Console.ReadKey();
+                        break;
+
+                    case ("Assign a chore"):
+                        List<Chore> allChores = choreRepo.GetAll();
+                        foreach (Chore c in allChores)
+                        {
+                            Console.WriteLine($"{c.Id}.{c.Name}");
+                        }
+                        Console.Write("Select the chore number to assign: ");
+                        int assignedChoreId = int.Parse(Console.ReadLine());
+
+                       
+                        List<Roommate> allRoommates = roommateRepo.GetAll();
+                        foreach (Roommate r in allRoommates)
+                        {
+                            Console.WriteLine($"{r.Id}. {r.FirstName} {r.LastName}");
+                        }
+                       
+                        Console.Write("Roomate assigned chore: ");
+                        int assignedRoommateId = int.Parse(Console.ReadLine());
+
+
+
+                        choreRepo.AssignChore(assignedChoreId, assignedRoommateId);
+
+                        Console.WriteLine($"Chore has been assigned");
                         Console.Write("Press any key to continue");
                         Console.ReadKey();
                         break;
@@ -120,8 +199,12 @@ namespace Roommates
                 "Show all rooms",
                 "Search for room",
                 "Add a room",
+                "Update a room",
+                "Delete a room",
                 "Show all chores",
                 "Add a chore",
+                "See unassigned chores",
+                "Assign a chore",
                 "Search for roommate",
                 "Exit"
             };
