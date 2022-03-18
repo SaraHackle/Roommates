@@ -5,7 +5,7 @@ using Roommates.Models;
 
 namespace Roommates.Repositories
 {
-    public class ChoreRepository :BaseRepository
+    public class ChoreRepository : BaseRepository
     {
         public ChoreRepository(string connectionString) : base(connectionString) { }
 
@@ -19,10 +19,10 @@ namespace Roommates.Repositories
                 {
                     cmd.CommandText = "SELECT Id, Name FROM Chore";
 
-                    using(SqlDataReader reader = cmd.ExecuteReader())
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         List<Chore> chores = new List<Chore>();
-                        
+
                         while (reader.Read())
                         {
                             int idColumnPosition = reader.GetOrdinal("Id");
@@ -43,7 +43,7 @@ namespace Roommates.Repositories
                 }
             }
         }
-        public Chore GetById (int id)
+        public Chore GetById(int id)
         {
             using (SqlConnection conn = Connection)
             {
@@ -99,7 +99,7 @@ namespace Roommates.Repositories
                     cmd.CommandText = "SELECT Name, Chore.Id FROM Chore LEFT JOIN RoommateChore ON RoommateChore.ChoreId = Chore.Id  WHERE RoommateChore.Id is NULL";
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
-                    { 
+                    {
 
                         List<Chore> unassignedChores = new List<Chore>();
 
@@ -123,7 +123,7 @@ namespace Roommates.Repositories
                 }
             }
         }
-         public void AssignChore( int choreId, int roommateId)
+        public void AssignChore(int choreId, int roommateId)
         {
             using (SqlConnection conn = Connection)
             {
@@ -141,7 +141,38 @@ namespace Roommates.Repositories
 
             // when this method is finished we can look in the database and see the new room.
         }
+        public void Update(Chore chore)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"UPDATE Chore
+                                    SET Name = @name
+                                    WHERE Id = @id";
+                    cmd.Parameters.AddWithValue("@name", chore.Name);
+                    cmd.Parameters.AddWithValue("@id", chore.Id);
 
-        
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+        public void Delete(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    // This Deletes a room where the Id is selected
+                    cmd.CommandText = "DELETE FROM RoommateChore WHERE ChoreId =  @id; DELETE FROM Chore WHERE Id = @id";
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+
     }
 }
